@@ -93,6 +93,25 @@ class FLPencilKit: NSObject, FlutterPlatformView {
         getBase64JpegData(pencilKitView: pencilKitView, call: call, result: result)
       case "loadBase64Data":
         loadBase64Data(pencilKitView: pencilKitView, call: call, result: result)
+        
+      // 추가한 부분 시작
+      case "getDrawingBoundingRect":
+        let rect = pencilKitView.getDrawingBounds()
+        result([
+          "x": Double(rect.origin.x),
+          "y": Double(rect.origin.y),
+          "width": Double(rect.width),
+          "height": Double(rect.height)
+        ])
+
+      case "getDrawingImage":
+        if let imageData = pencilKitView.getDrawingImage() {
+          result(FlutterStandardTypedData(bytes: imageData))
+        } else {
+          result(FlutterError(code: "image_error", message: "Failed to convert image.", details: nil))
+        }
+      // 추가한 부분 끝
+
       case "applyProperties":
         pencilKitView.applyProperties(properties: call.arguments as! [String: Any?])
         result(nil)
@@ -199,7 +218,7 @@ private func createCanvasView(delegate: PKCanvasViewDelegate) -> PKCanvasView {
 
 @available(iOS 13.0, *)
 private class PencilKitView: UIView {
-  private lazy var canvasView: PKCanvasView = createCanvasView(delegate: self)
+  fileprivate lazy var canvasView: PKCanvasView = createCanvasView(delegate: self)
 
   private var toolPickerForIos14: PKToolPicker? = nil
   private var toolPicker: PKToolPicker? {
@@ -278,19 +297,16 @@ private class PencilKitView: UIView {
   }
 
   func setPKTool(properties: [String: Any]) {
-    // toolType
     let inputToolType = properties["toolType"] as! String
-    // width
     var width: CGFloat?
     if let _width = properties["width"] as? Double {
       width = CGFloat(truncating: NSNumber(value: _width))
     }
-    // color
     var color = UIColor.black
     if let _color = properties["color"] as? Int {
       color = UIColor(hex: _color)
     }
-    // set PKTool based on input PKToolType
+
     switch inputToolType {
     case "pen":
       canvasView.tool = PKInkingTool(.pen, color: color, width: width)
@@ -316,23 +332,20 @@ private class PencilKitView: UIView {
       }
     case "eraserVector":
       if #available(iOS 16.4, *) {
-        canvasView
-          .tool = width != nil ? PKEraserTool(.vector, width: width!) : PKEraserTool(.vector)
+        canvasView.tool = width != nil ? PKEraserTool(.vector, width: width!) : PKEraserTool(.vector)
       } else {
         canvasView.tool = PKEraserTool(.vector)
       }
     case "eraserBitmap":
       if #available(iOS 16.4, *) {
-        canvasView
-          .tool = width != nil ? PKEraserTool(.bitmap, width: width!) : PKEraserTool(.bitmap)
+        canvasView.tool = width != nil ? PKEraserTool(.bitmap, width: width!) : PKEraserTool(.bitmap)
       } else {
         canvasView.tool = PKEraserTool(.bitmap)
       }
     case "eraserFixedWidthBitmap":
       if #available(iOS 16.4, *) {
-        canvasView
-          .tool = width != nil ? PKEraserTool(.fixedWidthBitmap, width: width!) :
-          PKEraserTool(.bitmap)
+        canvasView.tool = width != nil ? PKEraserTool(.fixedWidthBitmap, width: width!) :
+        PKEraserTool(.bitmap)
       }
     default:
       break
@@ -412,6 +425,17 @@ private class PencilKitView: UIView {
     if let backgroundColor = properties["backgroundColor"] as? Int {
       canvasView.backgroundColor = UIColor(hex: backgroundColor)
     }
+  }
+
+  // 새로 추가한 메서드
+  func getDrawingBounds() -> CGRect {
+    return canvasView.drawing.bounds
+  }
+
+  func getDrawingImage() -> Data? {
+    let rect = canvasView.drawing.bounds
+    let image = canvasView.drawing.image(from: rect, scale: UIScreen.main.scale)
+    return image.pngData()
   }
 
   private func synchronizeCanvasViewProperties(old: PKCanvasView, new: PKCanvasView) {
