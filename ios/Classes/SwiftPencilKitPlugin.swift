@@ -19,13 +19,25 @@ public class SwiftPencilKitPlugin: NSObject, FlutterPlugin {
     }
   }
 
-  func getDrawingBoundingRect(result: @escaping FlutterResult) {
-    let rect = canvasView.drawing.boundingRect
-    // rect 정보를 Flutter로 전달 (예: {x: rect.origin.x, y: rect.origin.y, width: rect.width, height: rect.height})
-    result(["x": rect.origin.x, "y": rect.origin.y, "width": rect.width, "height": rect.height])
+  // boundingRect 획득 메서드
+  static func getDrawingBoundingRect(result: @escaping FlutterResult) {
+      guard let canvasView = canvasView else {
+          result(FlutterError(code: "no_canvas", message: "CanvasView not initialized", details: nil))
+          return
+      }
+
+      let rect = canvasView.drawing.boundingRect
+      // rect 정보를 Flutter로 전달
+      result(["x": rect.origin.x, "y": rect.origin.y, "width": rect.width, "height": rect.height])
   }
 
-  func getDrawingImage(result: @escaping FlutterResult) {
+  // 해당 영역의 이미지를 PNG로 추출 메서드
+  static func getDrawingImage(result: @escaping FlutterResult) {
+      guard let canvasView = canvasView else {
+          result(FlutterError(code: "no_canvas", message: "CanvasView not initialized", details: nil))
+          return
+      }
+
       let rect = canvasView.drawing.boundingRect
       let image = canvasView.drawing.image(from: rect, scale: UIScreen.main.scale)
       guard let imageData = image.pngData() else {
@@ -38,8 +50,16 @@ public class SwiftPencilKitPlugin: NSObject, FlutterPlugin {
 
 private enum PencilKitUtil {
   static func handleMethodCall(call: FlutterMethodCall, result: @escaping FlutterResult) {
-    if call.method == "checkAvailable" {
-      result(ProcessInfo().operatingSystemVersion.majorVersion >= 13)
+    switch call.method {
+      case "checkAvailable":
+          // iOS 13 이상에서 PencilKit 사용 가능
+          result(ProcessInfo().operatingSystemVersion.majorVersion >= 13)
+      case "getDrawingBoundingRect":
+          SwiftPencilKitPlugin.getDrawingBoundingRect(result: result)
+      case "getDrawingImage":
+          SwiftPencilKitPlugin.getDrawingImage(result: result)
+      default:
+          result(FlutterMethodNotImplemented)
     }
   }
 }
