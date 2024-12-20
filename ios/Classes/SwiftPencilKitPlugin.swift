@@ -18,6 +18,22 @@ public class SwiftPencilKitPlugin: NSObject, FlutterPlugin {
       PencilKitUtil.handleMethodCall(call: call, result: result)
     }
   }
+
+  func getDrawingBoundingRect(result: @escaping FlutterResult) {
+    let rect = canvasView.drawing.boundingRect
+    // rect 정보를 Flutter로 전달 (예: {x: rect.origin.x, y: rect.origin.y, width: rect.width, height: rect.height})
+    result(["x": rect.origin.x, "y": rect.origin.y, "width": rect.width, "height": rect.height])
+  }
+
+  func getDrawingImage(result: @escaping FlutterResult) {
+      let rect = canvasView.drawing.boundingRect
+      let image = canvasView.drawing.image(from: rect, scale: UIScreen.main.scale)
+      guard let imageData = image.pngData() else {
+          result(FlutterError(code: "image_error", message: "Failed to convert image.", details: nil))
+          return
+      }
+      result(FlutterStandardTypedData(bytes: imageData))
+  }
 }
 
 private enum PencilKitUtil {
