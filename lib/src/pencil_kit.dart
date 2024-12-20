@@ -269,6 +269,7 @@ class PencilKitController {
     );
     _applyProperties();
   }
+
   final MethodChannel _channel;
   PencilKit widget;
 
@@ -292,121 +293,52 @@ class PencilKitController {
   Future<void> setPencilKitEnabled(bool enable) =>
       _channel.invokeMethod('setPencilKitEnabled', enable);
 
-  /// Clear all drawing data
   Future<void> clear() => _channel.invokeMethod('clear');
-
-  /// Redo last action on drawing
   Future<void> redo() => _channel.invokeMethod('redo');
-
-  /// Undo last action on drawing
   Future<void> undo() => _channel.invokeMethod('undo');
-
-  /// Show palette
   Future<void> show() => _channel.invokeMethod('show');
-
-  /// Hide palette
   Future<void> hide() => _channel.invokeMethod('hide');
 
-  /// Save drawing data into file system. The absolute uri of file in filesystem should be retrieved other library like 'path_provider'.
-  ///
-  /// Throws an [Error] if failed
-  /// Returns base64 data string if `withBase64Data` is true(default: false) or null.
-  ///
-  /// Example
-  ///
-  /// ```dart
-  ///  final Directory documentDir = await getApplicationDocumentsDirectory();
-  ///  final String pathToSave = '${documentDir.path}/drawing';
-  ///  try {
-  ///    await controller.save(uri: pathToSave);
-  ///    // handle success
-  ///  } catch (e) {
-  ///    // handle error
-  ///  }
-  /// ```
   Future<String?> save({required String uri, bool withBase64Data = false}) =>
       _channel.invokeMethod('save', <Object>[uri, withBase64Data]);
 
-  /// Load drawing data from file system. The absolute uri of file in filesystem should be retrieved other library like 'path_provider'.
-  ///
-  /// Throws an [Error] if failed
-  /// Returns base64 data string if `withBase64Data` is true(default: false) or null.
-  ///
-  /// Example
-  ///
-  /// ```dart
-  ///  final Directory documentDir = await getApplicationDocumentsDirectory();
-  ///  final String pathToLoad = '${documentDir.path}/drawing';
-  ///  try {
-  ///    await controller.load(uri: pathToLoad);
-  ///    // handle success
-  ///  } catch (e) {
-  ///    // handle error
-  ///  }
-  /// ```
   Future<String?> load({required String uri, bool withBase64Data = false}) =>
       _channel.invokeMethod('load', <Object>[uri, withBase64Data]);
 
-  /// Get current drawing data as base 64 encoded form.
-  ///
-  /// Throws an [Error] if failed
-  /// ```
   Future<String> getBase64Data() async {
     return await _channel.invokeMethod('getBase64Data') as String;
   }
 
-  /// Get current drawing data as png base 64 encoded form.
-  ///
-  /// Throws an [Error] if failed
-  /// ```
   Future<String> getBase64PngData({double scale = 0}) async {
     return await _channel.invokeMethod('getBase64PngData', <Object>[scale])
         as String;
   }
 
-  /// Get current drawing data as jpeg base 64 encoded form.
-  ///
-  /// Throws an [Error] if failed
-  /// ```
-  Future<String> getBase64JpegData(
-      {double scale = 0, double compression = 0.93}) async {
+  Future<String> getBase64JpegData({double scale = 0, double compression = 0.93}) async {
     return await _channel.invokeMethod('getBase64JpegData', <Object>[
       scale,
       compression,
     ]) as String;
   }
 
-  /// Load drawing data from base 64 encoded form.
-  /// ```
-  /// Throws an [Error] if failed
-  /// ```
-  /// Example
-  /// ```dart
-  /// try {
-  ///  await controller.loadBase64Data(base64Data);
-  /// // handle success
-  /// } catch (e) {
-  /// // handle error
-  /// }
-  /// ```
   Future<void> loadBase64Data(String base64Data) =>
       _channel.invokeMethod('loadBase64Data', base64Data);
 
-  /// Set PKTool toolType, width, and color
-  ///
-  /// This method can fail if tool type is not supported by device iOS version
-  /// In eraser tools, the width parameter works only from iOS 16.4 or above iOS version
-  ///
-  /// You should check whether feature is available in user's iOS version with [ToolType.isAvailableFromIos16_4] and [ToolType.isAvailableFromIos17]
-  ///
-  /// See also:
-  ///
-  /// * [ToolType] available tool types
-  Future<void> setPKTool(
-          {required ToolType toolType, double? width, Color? color}) =>
+  Future<void> setPKTool({required ToolType toolType, double? width, Color? color}) =>
       _channel.invokeMethod('setPKTool', <String, Object?>{
         'toolType': toolType.name,
         'width': width,
         'color': color?.value,
       });
+
+  // 여기서부터 추가하는 부분
+  Future<Map<String, double>> getDrawingBoundingRect() async {
+    final rect = await _channel.invokeMapMethod<String, double>('getDrawingBoundingRect');
+    return rect ?? {};
+  }
+
+  Future<Uint8List?> getDrawingImage() async {
+    final imageBytes = await _channel.invokeMethod<Uint8List>('getDrawingImage');
+    return imageBytes;
+  }
 }
