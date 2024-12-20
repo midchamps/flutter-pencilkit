@@ -29,7 +29,7 @@ public class SwiftPencilKitPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        let rect = canvasView.drawing.boundingRect
+        let rect = canvasView.drawing.bounds
         // rect 정보를 Flutter로 전달
         result(["x": rect.origin.x, "y": rect.origin.y, "width": rect.width, "height": rect.height])
     }
@@ -41,7 +41,7 @@ public class SwiftPencilKitPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        let rect = canvasView.drawing.boundingRect
+        let rect = canvasView.drawing.bounds
         let image = canvasView.drawing.image(from: rect, scale: UIScreen.main.scale)
         guard let imageData = image.pngData() else {
             result(FlutterError(code: "image_error", message: "Failed to convert image.", details: nil))
