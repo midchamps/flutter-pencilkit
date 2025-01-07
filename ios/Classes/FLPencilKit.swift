@@ -429,25 +429,7 @@ private class PencilKitView: UIView {
 
   // 새로 추가한 메서드
   func getDrawingBounds() -> CGRect {
-    let strokes = canvasView.drawing.strokes.filter { stroke in
-    if let inkingTool = stroke.ink as? PKInkingTool {
-        // 펜슬, 펜, 마커 등만 필터링
-        return inkingTool.inkType == .pen || inkingTool.inkType == .pencil || inkingTool.inkType == .marker
-    }
-        return false
-    }
-    
-    if strokes.isEmpty {
-        // 필터링된 도구로 그린 내용이 없으면 빈 CGRect 반환
-        return .zero
-    }
-
-    // 선택된 스트로크들의 경계를 합친 CGRect 반환
-    let bounds = strokes.reduce(CGRect.null) { partialResult, stroke in
-        return partialResult.union(stroke.bounds)
-    }
-    
-    return bounds
+    return canvasView.drawing.bounds
   }
 
   func getDrawingImage() -> Data? {
